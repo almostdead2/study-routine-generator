@@ -194,3 +194,12 @@ async function exportAsDOCX() {
   link.download = "study-routine.docx";
   link.click();
 }
+
+document.addEventListener('focusin', function (e) {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+    e.target.scrollIntoView({
+      behavior: 'auto',   // instant scroll
+      block: 'center'     // align vertically
+    });
+  }
+});
