@@ -137,7 +137,7 @@ function removeColumn() {
 
 // Export functions
 function exportAsImage(type = "png") {
-  const scale = 9; // Ultra high quality
+  const scale = 8; // Ultra high quality
   html2canvas(document.querySelector("table"), {
     scale: scale,
     useCORS: true
