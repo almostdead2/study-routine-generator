@@ -52,3 +52,7 @@ th {
 td[contenteditable="true"] {
   background-color: #fffdf0;
 }
+
+.highlight {
+  background-color: #ffff99 !important; /* light yellow highlighter */
+}
