@@ -137,7 +137,7 @@ function removeColumn() {
 
 // Export functions
 function exportAsImage(type = "png") {
-  const scale = 6; // Ultra high quality
+  const scale = 9; // Ultra high quality
   html2canvas(document.querySelector("table"), {
     scale: scale,
     useCORS: true
@@ -154,7 +154,7 @@ async function exportAsPDF() {
   const doc = new jsPDF({ orientation: "landscape", compress: true });
 
   const canvas = await html2canvas(document.querySelector("table"), {
-    scale: 3, // Good quality under 6MB
+    scale: 9, // Good quality under 6MB
     useCORS: true
   });
 
