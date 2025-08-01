@@ -1,14 +1,15 @@
-// ⏱️ Time formatting
 function formatTimeRange(start, duration) {
   const [h, m] = start.split(':').map(Number);
   const startTime = new Date(0, 0, 0, h, m);
   const endTime = new Date(startTime.getTime() + duration * 60000);
+
   const format = t =>
     t.toLocaleTimeString([], {
       hour: 'numeric',
       minute: '2-digit',
       hour12: true,
     }).replace(/am/i, 'AM').replace(/pm/i, 'PM');
+
   return `${format(startTime)} - ${format(endTime)}`;
 }
 
@@ -16,11 +17,13 @@ function generateTimeSlots(start, end, duration) {
   const slots = [];
   let current = new Date(`2000-01-01T${start}`);
   const endTime = new Date(`2000-01-01T${end}`);
+
   while (current < endTime) {
     const range = formatTimeRange(current.toTimeString().slice(0, 5), duration);
     slots.push(range);
     current = new Date(current.getTime() + duration * 60000);
   }
+
   return slots;
 }
 
@@ -64,7 +67,6 @@ function generateRoutine() {
       const td = document.createElement("td");
       td.contentEditable = true;
       td.addEventListener("click", () => highlightCell(td));
-      enableImageInsertion(td);
       row.appendChild(td);
     });
 
@@ -74,12 +76,12 @@ function generateRoutine() {
   container.appendChild(table);
 }
 
-// ✅ Highlight cell
+// Highlight cell
 function highlightCell(td) {
   td.classList.toggle("highlight");
 }
 
-// ✅ Add/Remove row/column
+// Add/Remove functionality
 function addRow() {
   const table = document.querySelector("table");
   if (!table) return;
@@ -95,7 +97,6 @@ function addRow() {
     const td = document.createElement("td");
     td.contentEditable = true;
     td.addEventListener("click", () => highlightCell(td));
-    enableImageInsertion(td);
     row.appendChild(td);
   }
 
@@ -115,7 +116,6 @@ function addColumn() {
     const td = document.createElement("td");
     td.contentEditable = true;
     td.addEventListener("click", () => highlightCell(td));
-    enableImageInsertion(td);
     table.rows[i].appendChild(td);
   }
 }
@@ -135,9 +135,9 @@ function removeColumn() {
   }
 }
 
-// ✅ Export
+// Export functions
 function exportAsImage(type = "png") {
-  const scale = 10;
+  const scale = 10; // Ultra high quality
   html2canvas(document.querySelector("table"), {
     scale: scale,
     useCORS: true
@@ -154,11 +154,11 @@ async function exportAsPDF() {
   const doc = new jsPDF({ orientation: "landscape", compress: true });
 
   const canvas = await html2canvas(document.querySelector("table"), {
-    scale: 10,
+    scale: 10, // Good quality under 6MB
     useCORS: true
   });
 
-  const imgData = canvas.toDataURL("image/jpeg", 1.0);
+  const imgData = canvas.toDataURL("image/jpeg", 1.0); // Smaller than PNG
 
   const imgProps = doc.getImageProperties(imgData);
   const pdfWidth = doc.internal.pageSize.getWidth();
@@ -193,72 +193,4 @@ async function exportAsDOCX() {
   link.href = URL.createObjectURL(blob);
   link.download = "study-routine.docx";
   link.click();
-}
-
-// ✅ Image Insertion Controls (⬆️⬇️⬅️➡️)
-function enableImageInsertion(td) {
-  const toolbar = document.createElement("div");
-  toolbar.style.display = "flex";
-  toolbar.style.justifyContent = "space-around";
-  toolbar.style.marginTop = "4px";
-
-  ["Top", "Bottom", "Left", "Right"].forEach(pos => {
-    const btn = document.createElement("button");
-    btn.textContent = pos;
-    btn.style.fontSize = "10px";
-    btn.onclick = () => insertImage(td, pos.toLowerCase());
-    toolbar.appendChild(btn);
-  });
-
-  td.appendChild(toolbar);
-}
-
-function insertImage(cell, position) {
-  const input = document.createElement("input");
-  input.type = "file";
-  input.accept = "image/*";
-
-  input.onchange = () => {
-    const file = input.files[0];
-    if (!file) return;
-
-    const img = document.createElement("img");
-    img.style.maxWidth = "100%";
-    img.style.maxHeight = "100px";
-    img.style.display = "block";
-
-    const reader = new FileReader();
-    reader.onload = e => {
-      img.src = e.target.result;
-
-      const wrapper = document.createElement("div");
-      wrapper.style.display = "flex";
-      wrapper.style.flexDirection = position === "top" || position === "bottom" ? "column" : "row";
-      if (position === "right") wrapper.style.flexDirection = "row-reverse";
-      if (position === "bottom") wrapper.style.flexDirection = "column-reverse";
-
-      const removeBtn = document.createElement("button");
-      removeBtn.textContent = "🗑️";
-      removeBtn.onclick = () => wrapper.remove();
-
-      const slider = document.createElement("input");
-      slider.type = "range";
-      slider.min = 20;
-      slider.max = 150;
-      slider.value = 100;
-      slider.style.width = "100%";
-      slider.oninput = () => {
-        img.style.maxHeight = `${slider.value}px`;
-      };
-
-      wrapper.appendChild(img);
-      wrapper.appendChild(slider);
-      wrapper.appendChild(removeBtn);
-
-      cell.appendChild(wrapper);
-    };
-    reader.readAsDataURL(file);
-  };
-
-  input.click();
 }
