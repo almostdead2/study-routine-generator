@@ -137,7 +137,7 @@ function removeColumn() {
 
 // Export functions
 function exportAsImage(type = "png") {
-  const scale = 8; // Ultra high quality
+  const scale = 10; // Ultra high quality
   html2canvas(document.querySelector("table"), {
     scale: scale,
     useCORS: true
@@ -154,11 +154,11 @@ async function exportAsPDF() {
   const doc = new jsPDF({ orientation: "landscape", compress: true });
 
   const canvas = await html2canvas(document.querySelector("table"), {
-    scale: 9, // Good quality under 6MB
+    scale: 10, // Good quality under 6MB
     useCORS: true
   });
 
-  const imgData = canvas.toDataURL("image/jpeg", 0.95); // Smaller than PNG
+  const imgData = canvas.toDataURL("image/jpeg", 1.0); // Smaller than PNG
 
   const imgProps = doc.getImageProperties(imgData);
   const pdfWidth = doc.internal.pageSize.getWidth();
