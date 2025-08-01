@@ -1,30 +1,94 @@
-function formatTimeRange(start, duration) {
-  const [h, m] = start.split(':').map(Number);
-  const startTime = new Date(0, 0, 0, h, m);
-  const endTime = new Date(startTime.getTime() + duration * 60000);
+// ... (Keep all your existing code unchanged above this)
 
-  const format = t =>
-    t.toLocaleTimeString([], {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true,
-    }).replace(/am/i, 'AM').replace(/pm/i, 'PM');
+function createImageControls(td) {
+  const wrapper = document.createElement("div");
+  wrapper.className = "image-controls";
+  wrapper.style.position = "relative";
+  wrapper.style.display = "inline-block";
+  wrapper.style.zIndex = "1"; // ensures buttons show above image
 
-  return `${format(startTime)} - ${format(endTime)}`;
+  const img = document.createElement("img");
+  img.style.maxWidth = "100px";
+  img.style.maxHeight = "100px";
+  img.style.display = "block";
+  img.style.margin = "5px auto";
+  img.style.position = "relative";
+  img.style.zIndex = "0";
+
+  const fileInput = document.createElement("input");
+  fileInput.type = "file";
+  fileInput.accept = "image/*";
+  fileInput.style.display = "block";
+  fileInput.addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+
+  const directions = ["↑", "↓", "←", "→"];
+  directions.forEach(dir => {
+    const btn = document.createElement("button");
+    btn.textContent = dir;
+    btn.className = "no-export";
+    btn.style.fontSize = "10px";
+    btn.style.margin = "1px";
+    btn.style.padding = "2px 5px";
+    btn.addEventListener("click", () => {
+      const step = 5;
+      const top = parseInt(img.style.top || "0");
+      const left = parseInt(img.style.left || "0");
+      if (dir === "↑") img.style.top = (top - step) + "px";
+      if (dir === "↓") img.style.top = (top + step) + "px";
+      if (dir === "←") img.style.left = (left - step) + "px";
+      if (dir === "→") img.style.left = (left + step) + "px";
+      img.style.position = "relative";
+    });
+    wrapper.appendChild(btn);
+  });
+
+  const resizeSlider = document.createElement("input");
+  resizeSlider.type = "range";
+  resizeSlider.min = "10";
+  resizeSlider.max = "200";
+  resizeSlider.value = "100";
+  resizeSlider.className = "no-export";
+  resizeSlider.style.width = "100%";
+  resizeSlider.addEventListener("input", () => {
+    const scale = resizeSlider.value / 100;
+    img.style.width = `${scale * 100}%`;
+    img.style.height = "auto";
+  });
+
+  const deleteBtn = document.createElement("button");
+  deleteBtn.textContent = "🗑️";
+  deleteBtn.className = "no-export";
+  deleteBtn.style.fontSize = "12px";
+  deleteBtn.style.margin = "2px";
+  deleteBtn.addEventListener("click", () => {
+    img.remove();
+    wrapper.remove();
+  });
+
+  wrapper.appendChild(fileInput);
+  wrapper.appendChild(img);
+  wrapper.appendChild(resizeSlider);
+  wrapper.appendChild(deleteBtn);
+
+  td.appendChild(wrapper);
 }
 
-function generateTimeSlots(start, end, duration) {
-  const slots = [];
-  let current = new Date(`2000-01-01T${start}`);
-  const endTime = new Date(`2000-01-01T${end}`);
-
-  while (current < endTime) {
-    const range = formatTimeRange(current.toTimeString().slice(0, 5), duration);
-    slots.push(range);
-    current = new Date(current.getTime() + duration * 60000);
-  }
-
-  return slots;
+function makeCellEditable(td) {
+  td.contentEditable = true;
+  td.addEventListener("click", () => {
+    highlightCell(td);
+    if (!td.querySelector(".image-controls")) {
+      createImageControls(td);
+    }
+  });
 }
 
 function generateRoutine() {
@@ -65,8 +129,7 @@ function generateRoutine() {
 
     slots.forEach(() => {
       const td = document.createElement("td");
-      td.contentEditable = true;
-      td.addEventListener("click", () => highlightCell(td));
+      makeCellEditable(td);
       row.appendChild(td);
     });
 
@@ -76,12 +139,7 @@ function generateRoutine() {
   container.appendChild(table);
 }
 
-// Highlight cell
-function highlightCell(td) {
-  td.classList.toggle("highlight");
-}
-
-// Add/Remove functionality
+// Also replace inside `addRow` and `addColumn`
 function addRow() {
   const table = document.querySelector("table");
   if (!table) return;
@@ -95,8 +153,7 @@ function addRow() {
   const columnCount = table.rows[0].cells.length - 1;
   for (let i = 0; i < columnCount; i++) {
     const td = document.createElement("td");
-    td.contentEditable = true;
-    td.addEventListener("click", () => highlightCell(td));
+    makeCellEditable(td);
     row.appendChild(td);
   }
 
@@ -114,83 +171,7 @@ function addColumn() {
 
   for (let i = 1; i < table.rows.length; i++) {
     const td = document.createElement("td");
-    td.contentEditable = true;
-    td.addEventListener("click", () => highlightCell(td));
+    makeCellEditable(td);
     table.rows[i].appendChild(td);
   }
-}
-
-function removeRow() {
-  const table = document.querySelector("table");
-  if (!table || table.rows.length <= 2) return;
-  table.deleteRow(-1);
-}
-
-function removeColumn() {
-  const table = document.querySelector("table");
-  if (!table || table.rows[0].cells.length <= 2) return;
-
-  for (let i = 0; i < table.rows.length; i++) {
-    table.rows[i].deleteCell(-1);
-  }
-}
-
-// Export functions
-function exportAsImage(type = "png") {
-  const scale = 10; // Ultra high quality
-  html2canvas(document.querySelector("table"), {
-    scale: scale,
-    useCORS: true
-  }).then(canvas => {
-    const link = document.createElement("a");
-    link.download = `study-routine.${type}`;
-    link.href = canvas.toDataURL(`image/${type}`, 1.0);
-    link.click();
-  });
-}
-
-async function exportAsPDF() {
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ orientation: "landscape", compress: true });
-
-  const canvas = await html2canvas(document.querySelector("table"), {
-    scale: 10, // Good quality under 6MB
-    useCORS: true
-  });
-
-  const imgData = canvas.toDataURL("image/jpeg", 1.0); // Smaller than PNG
-
-  const imgProps = doc.getImageProperties(imgData);
-  const pdfWidth = doc.internal.pageSize.getWidth();
-  const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-
-  doc.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
-  doc.save("study-routine.pdf");
-}
-
-async function exportAsDOCX() {
-  const { Document, Packer, Paragraph, Table, TableRow, TableCell } = window.docx;
-
-  const tableEl = document.querySelector("table");
-  const rows = Array.from(tableEl.rows).map(tr =>
-    new TableRow({
-      children: Array.from(tr.cells).map(td =>
-        new TableCell({
-          children: [new Paragraph(td.innerText.trim())],
-        })
-      )
-    })
-  );
-
-  const doc = new Document({
-    sections: [{
-      children: [new Table({ rows })],
-    }],
-  });
-
-  const blob = await Packer.toBlob(doc);
-  const link = document.createElement("a");
-  link.href = URL.createObjectURL(blob);
-  link.download = "study-routine.docx";
-  link.click();
 }
