@@ -10,16 +10,20 @@
   <h1>Study Routine Generator</h1>
 
   <div class="controls">
-    <label>Start Time: <input type="time" id="startTime" value="06:00"></label>
-    <label>End Time: <input type="time" id="endTime" value="22:00"></label>
-    <label>Slot Duration (minutes): 
-      <select id="slotDuration">
-        <option value="60">60</option>
-        <option value="90">90</option>
-        <option value="120" selected>120</option>
-      </select>
+    <label>Start Time:
+      <input type="time" id="startTime" value="06:00">
+    </label>
+    <label>End Time:
+      <input type="time" id="endTime" value="22:00">
+    </label>
+    <label>Slot Duration (minutes):
+      <input type="number" id="slotDuration" value="120" min="5" step="5">
     </label>
     <button onclick="generateRoutine()">Generate Routine</button>
+    <button onclick="addRow()">Add Row</button>
+    <button onclick="addColumn()">Add Column</button>
+    <button onclick="removeRow()">Remove Row</button>
+    <button onclick="removeColumn()">Remove Column</button>
   </div>
 
   <div class="export-buttons">
