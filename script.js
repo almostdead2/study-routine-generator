@@ -8,7 +8,7 @@ function formatTimeRange(start, duration) {
       hour: 'numeric',
       minute: '2-digit',
       hour12: true,
-    });
+    }).replace(/am/i, 'AM').replace(/pm/i, 'PM');
 
   return `${format(startTime)} - ${format(endTime)}`;
 }
@@ -76,37 +76,95 @@ function generateRoutine() {
   container.appendChild(table);
 }
 
-// Highlight cell toggle
+// Highlight cell
 function highlightCell(td) {
   td.classList.toggle("highlight");
 }
 
+// Add/Remove functionality
+function addRow() {
+  const table = document.querySelector("table");
+  if (!table) return;
+  const row = document.createElement("tr");
+
+  const th = document.createElement("th");
+  th.contentEditable = true;
+  th.innerText = "New Day";
+  row.appendChild(th);
+
+  const columnCount = table.rows[0].cells.length - 1;
+  for (let i = 0; i < columnCount; i++) {
+    const td = document.createElement("td");
+    td.contentEditable = true;
+    td.addEventListener("click", () => highlightCell(td));
+    row.appendChild(td);
+  }
+
+  table.appendChild(row);
+}
+
+function addColumn() {
+  const table = document.querySelector("table");
+  if (!table) return;
+
+  const headerCell = document.createElement("th");
+  headerCell.contentEditable = true;
+  headerCell.innerText = "New Time";
+  table.rows[0].appendChild(headerCell);
+
+  for (let i = 1; i < table.rows.length; i++) {
+    const td = document.createElement("td");
+    td.contentEditable = true;
+    td.addEventListener("click", () => highlightCell(td));
+    table.rows[i].appendChild(td);
+  }
+}
+
+function removeRow() {
+  const table = document.querySelector("table");
+  if (!table || table.rows.length <= 2) return;
+  table.deleteRow(-1);
+}
+
+function removeColumn() {
+  const table = document.querySelector("table");
+  if (!table || table.rows[0].cells.length <= 2) return;
+
+  for (let i = 0; i < table.rows.length; i++) {
+    table.rows[i].deleteCell(-1);
+  }
+}
+
 // Export functions
 function exportAsImage(type = "png") {
-  const scale = 4; // Ultra high resolution
+  const scale = 6; // Ultra high quality
   html2canvas(document.querySelector("table"), {
     scale: scale,
     useCORS: true
   }).then(canvas => {
     const link = document.createElement("a");
     link.download = `study-routine.${type}`;
-    link.href = canvas.toDataURL(`image/${type}`);
+    link.href = canvas.toDataURL(`image/${type}`, 1.0);
     link.click();
   });
 }
 
 async function exportAsPDF() {
   const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ orientation: "landscape" });
+  const doc = new jsPDF({ orientation: "landscape", compress: true });
 
-  const canvas = await html2canvas(document.querySelector("table"), { scale: 4 });
-  const imgData = canvas.toDataURL("image/png");
+  const canvas = await html2canvas(document.querySelector("table"), {
+    scale: 3, // Good quality under 6MB
+    useCORS: true
+  });
+
+  const imgData = canvas.toDataURL("image/jpeg", 0.95); // Smaller than PNG
 
   const imgProps = doc.getImageProperties(imgData);
   const pdfWidth = doc.internal.pageSize.getWidth();
   const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
 
-  doc.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+  doc.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
   doc.save("study-routine.pdf");
 }
 
