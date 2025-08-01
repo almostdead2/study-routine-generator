@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Study Routine Generator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>Study Routine Generator</h1>
+
+  <div class="controls">
+    <label>Start Time: <input type="time" id="startTime" value="06:00"></label>
+    <label>End Time: <input type="time" id="endTime" value="22:00"></label>
+    <label>Slot Duration (minutes): 
+      <select id="slotDuration">
+        <option value="60">60</option>
+        <option value="90">90</option>
+        <option value="120" selected>120</option>
+      </select>
+    </label>
+    <button onclick="generateRoutine()">Generate Routine</button>
+  </div>
+
+  <div class="export-buttons">
+    <button onclick="exportAsImage()">Export as PNG</button>
+    <button onclick="exportAsPDF()">Export as PDF</button>
+    <button onclick="exportAsDOCX()">Export as DOCX</button>
+  </div>
+
+  <div id="routineContainer"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://unpkg.com/docx@8.4.0/build/index.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
