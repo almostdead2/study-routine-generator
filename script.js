@@ -3,7 +3,12 @@ function formatTimeRange(start, duration) {
   const startTime = new Date(0, 0, 0, h, m);
   const endTime = new Date(startTime.getTime() + duration * 60000);
 
-  const format = t => t.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const format = t =>
+    t.toLocaleTimeString([], {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
 
   return `${format(startTime)} - ${format(endTime)}`;
 }
@@ -14,7 +19,7 @@ function generateTimeSlots(start, end, duration) {
   const endTime = new Date(`2000-01-01T${end}`);
 
   while (current < endTime) {
-    const range = formatTimeRange(current.toTimeString().slice(0,5), duration);
+    const range = formatTimeRange(current.toTimeString().slice(0, 5), duration);
     slots.push(range);
     current = new Date(current.getTime() + duration * 60000);
   }
@@ -35,23 +40,57 @@ function generateRoutine() {
 
   const table = document.createElement("table");
   const headerRow = document.createElement("tr");
-  headerRow.innerHTML = `<th>Day / Time</th>` + slots.map(slot => `<th>${slot}</th>`).join('');
+
+  const dayHeader = document.createElement("th");
+  dayHeader.contentEditable = true;
+  dayHeader.innerText = "Day / Time";
+  headerRow.appendChild(dayHeader);
+
+  slots.forEach(slot => {
+    const th = document.createElement("th");
+    th.contentEditable = true;
+    th.innerText = slot;
+    headerRow.appendChild(th);
+  });
+
   table.appendChild(headerRow);
 
   days.forEach(day => {
     const row = document.createElement("tr");
-    row.innerHTML = `<th>${day}</th>` + slots.map(() => `<td contenteditable="true"></td>`).join('');
+
+    const dayCell = document.createElement("th");
+    dayCell.contentEditable = true;
+    dayCell.innerText = day;
+    row.appendChild(dayCell);
+
+    slots.forEach(() => {
+      const td = document.createElement("td");
+      td.contentEditable = true;
+      td.addEventListener("click", () => highlightCell(td));
+      row.appendChild(td);
+    });
+
     table.appendChild(row);
   });
 
   container.appendChild(table);
 }
 
-function exportAsImage() {
-  html2canvas(document.querySelector("table")).then(canvas => {
+// Highlight cell toggle
+function highlightCell(td) {
+  td.classList.toggle("highlight");
+}
+
+// Export functions
+function exportAsImage(type = "png") {
+  const scale = 4; // Ultra high resolution
+  html2canvas(document.querySelector("table"), {
+    scale: scale,
+    useCORS: true
+  }).then(canvas => {
     const link = document.createElement("a");
-    link.download = "study-routine.png";
-    link.href = canvas.toDataURL("image/png");
+    link.download = `study-routine.${type}`;
+    link.href = canvas.toDataURL(`image/${type}`);
     link.click();
   });
 }
@@ -60,7 +99,7 @@ async function exportAsPDF() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation: "landscape" });
 
-  const canvas = await html2canvas(document.querySelector("table"));
+  const canvas = await html2canvas(document.querySelector("table"), { scale: 4 });
   const imgData = canvas.toDataURL("image/png");
 
   const imgProps = doc.getImageProperties(imgData);
@@ -72,7 +111,7 @@ async function exportAsPDF() {
 }
 
 async function exportAsDOCX() {
-  const { Document, Packer, Paragraph, Table, TableRow, TableCell, TextRun } = window.docx;
+  const { Document, Packer, Paragraph, Table, TableRow, TableCell } = window.docx;
 
   const tableEl = document.querySelector("table");
   const rows = Array.from(tableEl.rows).map(tr =>
